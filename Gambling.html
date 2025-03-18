@@ -39,6 +39,11 @@
             font-size: 18px;
             font-weight: bold;
         }
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -51,9 +56,11 @@
         <input type="number" id="stake" min="1" value="10">
         <button onclick="calculateReturns()">Calculate Returns</button>
         <div class="results" id="results"></div>
+        <div class="error" id="error"></div>
     </div>
 
     <script>
+        // Generate input fields for horses based on the number of horses
         function generateHorseInputs() {
             let numHorses = document.getElementById("numHorses").value;
             let horseInputs = document.getElementById("horseInputs");
@@ -68,43 +75,77 @@
                 `;
             }
         }
-        
+
+        // Event listener for number of horses input
         document.getElementById("numHorses").addEventListener("change", generateHorseInputs);
+
+        // Generate inputs on page load
         generateHorseInputs();
 
+        // Calculate returns
         function calculateReturns() {
             let numHorses = document.getElementById("numHorses").value;
-            let stake = document.getElementById("stake").value;
+            let stake = parseFloat(document.getElementById("stake").value);
+            let errorDiv = document.getElementById("error");
+            let resultsDiv = document.getElementById("results");
+
+            // Reset error and results
+            errorDiv.innerHTML = "";
+            resultsDiv.innerHTML = "";
+
+            // Validate stake
+            if (isNaN(stake) || stake <= 0) {
+                errorDiv.innerHTML = "Please enter a valid stake amount.";
+                return;
+            }
+
             let eachWayStake = stake / 2;
-            let winReturn = eachWayStake;
-            let placeReturn = eachWayStake;
-            
+            let totalWinReturn = 0;
+            let totalPlaceReturn = 0;
+
             for (let i = 0; i < numHorses; i++) {
                 let fractionalOdds = document.getElementById(`fractionalOdds${i}`).value;
                 let eachWayFraction = document.getElementById(`eachWayFraction${i}`).value;
-                
+
+                // Validate fractional odds and each-way fraction
+                if (!fractionalOdds.includes("/") || !eachWayFraction.includes("/")) {
+                    errorDiv.innerHTML = `Invalid input for Horse ${i + 1}. Please use the format "10/1" for odds and "1/5" for fractions.`;
+                    return;
+                }
+
+                // Parse fractional odds
                 let oddsParts = fractionalOdds.split("/");
-                let firstOdd = parseFloat(oddsParts[0]);
-                let secondOdd = parseFloat(oddsParts[1]);
-                
+                let numerator = parseFloat(oddsParts[0]);
+                let denominator = parseFloat(oddsParts[1]);
+
+                if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+                    errorDiv.innerHTML = `Invalid fractional odds for Horse ${i + 1}.`;
+                    return;
+                }
+
+                // Parse each-way fraction
                 let fractionParts = eachWayFraction.split("/");
-                let eachWayNumerator = parseFloat(fractionParts[0]);
-                let eachWayDenominator = parseFloat(fractionParts[1]);
-                let eachWayOdd = eachWayNumerator / eachWayDenominator;
-                
-                let winOdds = (firstOdd / secondOdd) + 1;
-                let placeOdds = ((firstOdd / secondOdd) * eachWayOdd) + 1;
-                
-                winReturn *= winOdds;
-                placeReturn *= placeOdds;
+                let fractionNumerator = parseFloat(fractionParts[0]);
+                let fractionDenominator = parseFloat(fractionParts[1]);
+
+                if (isNaN(fractionNumerator) || isNaN(fractionDenominator) || fractionDenominator === 0) {
+                    errorDiv.innerHTML = `Invalid each-way fraction for Horse ${i + 1}.`;
+                    return;
+                }
+
+                // Calculate win and place returns
+                let winOdds = numerator / denominator;
+                let placeOdds = winOdds * (fractionNumerator / fractionDenominator);
+
+                totalWinReturn += eachWayStake * (winOdds + 1);
+                totalPlaceReturn += eachWayStake * (placeOdds + 1);
             }
-            
-            let totalReturn = winReturn + placeReturn;
-            
-            document.getElementById("results").innerHTML = `
-                Win Return: €${winReturn.toFixed(2)}<br>
-                Place Return: €${placeReturn.toFixed(2)}<br>
-                Total Each-Way Return: €${totalReturn.toFixed(2)}
+
+            // Display results
+            resultsDiv.innerHTML = `
+                Win Return: £${totalWinReturn.toFixed(2)}<br>
+                Place Return: £${totalPlaceReturn.toFixed(2)}<br>
+                Total Each-Way Return: £${(totalWinReturn + totalPlaceReturn).toFixed(2)}
             `;
         }
     </script>
