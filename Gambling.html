@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Each-Way Bet Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .results {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Each-Way Bet Calculator</h2>
+        <label for="numHorses">Number of Horses:</label>
+        <input type="number" id="numHorses" min="1" value="1">
+        <div id="horseInputs"></div>
+        <label for="stake">Total Stake (£):</label>
+        <input type="number" id="stake" min="1" value="10">
+        <button onclick="calculateReturns()">Calculate Returns</button>
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        function generateHorseInputs() {
+            let numHorses = document.getElementById("numHorses").value;
+            let horseInputs = document.getElementById("horseInputs");
+            horseInputs.innerHTML = "";
+            for (let i = 0; i < numHorses; i++) {
+                horseInputs.innerHTML += `
+                    <h4>Horse ${i + 1}</h4>
+                    <label>Fractional Odds (e.g. 10/1):</label>
+                    <input type="text" id="fractionalOdds${i}" placeholder="e.g. 10/1" required>
+                    <label>Each-Way Fraction (e.g. 1/5, 1/4):</label>
+                    <input type="text" id="eachWayFraction${i}" placeholder="e.g. 1/5" required>
+                `;
+            }
+        }
+        
+        document.getElementById("numHorses").addEventListener("change", generateHorseInputs);
+        generateHorseInputs();
+
+        function calculateReturns() {
+            let numHorses = document.getElementById("numHorses").value;
+            let stake = document.getElementById("stake").value;
+            let eachWayStake = stake / 2;
+            let winReturn = eachWayStake;
+            let placeReturn = eachWayStake;
+            
+            for (let i = 0; i < numHorses; i++) {
+                let fractionalOdds = document.getElementById(`fractionalOdds${i}`).value;
+                let eachWayFraction = document.getElementById(`eachWayFraction${i}`).value;
+                
+                let oddsParts = fractionalOdds.split("/");
+                let firstOdd = parseFloat(oddsParts[0]);
+                let secondOdd = parseFloat(oddsParts[1]);
+                
+                let fractionParts = eachWayFraction.split("/");
+                let eachWayNumerator = parseFloat(fractionParts[0]);
+                let eachWayDenominator = parseFloat(fractionParts[1]);
+                let eachWayOdd = eachWayNumerator / eachWayDenominator;
+                
+                let winOdds = (firstOdd / secondOdd) + 1;
+                let placeOdds = ((firstOdd / secondOdd) * eachWayOdd) + 1;
+                
+                winReturn *= winOdds;
+                placeReturn *= placeOdds;
+            }
+            
+            let totalReturn = winReturn + placeReturn;
+            
+            document.getElementById("results").innerHTML = `
+                Win Return: €${winReturn.toFixed(2)}<br>
+                Place Return: €${placeReturn.toFixed(2)}<br>
+                Total Each-Way Return: €${totalReturn.toFixed(2)}
+            `;
+        }
+    </script>
+</body>
+</html>
